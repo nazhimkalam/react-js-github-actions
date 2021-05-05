@@ -1,7 +1,7 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Node.js CI
+name: Firebase CI
 
 on:
   push:
@@ -25,5 +25,28 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm i
     - run: npm install -g firebase-tools
-    - run: npm run build --if-present
-    - run: firebase deploy --token "1//0gu8thIS3JXQoCgYIARAAGBASNwF-L9IrfJRMFU-zXsj2t05blPydn87vmfDLkcib722qpLY7ZHT2WP950bSHSTwfQ6qzU8JR6vo"
+    - run: npm run build 
+    - name: Archive Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path: build
+    
+    
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download Build
+        uses: actions/download-artifact@v2
+        with:
+          name: build
+          path: build
+      - name: Depoy to Firebase
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
